@@ -25,6 +25,14 @@
   let currentAngle = null;
   let currentDistance = null;
 
+  // Pulse effect settings.  Each pulse is an expanding semi‑circular ring
+  // drawn from the centre of the radar.  A pulse starts when a new reading
+  // arrives and lasts for PULSE_DURATION milliseconds.  Pulses fade out
+  // over their lifetime.
+  const pulses = [];
+  const PULSE_DURATION = 2000; // 2 seconds for a full expansion
+  let lastPulseTime = 0;
+
   let socket = null;
 
   // Resize canvas based on computed CSS size
@@ -100,6 +108,27 @@
       ctx.fill();
     });
 
+    // Draw pulses (expanding semi‑circular rings)
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height;
+    const maxRadius = Math.min(canvas.width / 2, canvas.height) - 5;
+    for (let i = pulses.length - 1; i >= 0; i--) {
+      const age = now - pulses[i].startTime;
+      const progress = age / PULSE_DURATION;
+      if (progress >= 1) {
+        // Remove finished pulse
+        pulses.splice(i, 1);
+        continue;
+      }
+      const pr = progress * maxRadius;
+      const alpha = Math.max(0, 1 - progress);
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, pr, Math.PI, 2 * Math.PI);
+      ctx.strokeStyle = 'rgba(0, 255, 128, ' + (alpha * 0.3) + ')';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
     // Draw sweeping line for current angle
     if (currentAngle !== null) {
       const pos = polarToCanvas(currentAngle, maxDistance);
@@ -114,18 +143,31 @@
 
   // Update data when a new reading arrives
   function updateData(angle, distance) {
+    // Trigger a pulse when a new reading arrives.  Limit the frequency so
+    // multiple readings within the pulse duration do not spawn many rings.
+    const nowPulse = Date.now();
+    if (nowPulse - lastPulseTime > PULSE_DURATION / 2) {
+      pulses.push({ startTime: nowPulse });
+      lastPulseTime = nowPulse;
+    }
+
     currentAngle = angle;
     currentDistance = distance;
     angleDisplay.textContent = angle.toFixed(0);
+
     if (distance >= 0) {
       distanceDisplay.textContent = distance.toFixed(2);
     } else {
       distanceDisplay.textContent = '--';
     }
+
+    // Add the reading to the history buffer
     scanPoints.push({ angle, distance, timestamp: Date.now() });
     if (scanPoints.length > maxPoints) {
       scanPoints.splice(0, scanPoints.length - maxPoints);
     }
+
+    // Redraw the display
     drawRadar();
   }
 
