@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SonarSense Radar</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>SonarSense Radar</h1>
+    </header>
+    <main>
+      <div class="controls">
+        <label for="wsUrl">WebSocket URL:</label>
+        <input
+          type="text"
+          id="wsUrl"
+          placeholder="ws://raspberrypi.local:8765"
+          value="ws://raspberrypi.local:8765"
+        />
+        <button id="connectBtn">Connect</button>
+        <span id="status" class="status">Disconnected</span>
+      </div>
+      <canvas id="radarCanvas"></canvas>
+      <div class="info">
+        <p>Angle: <span id="angleDisplay">--</span>°</p>
+        <p>Distance: <span id="distanceDisplay">--</span> cm</p>
+      </div>
+    </main>
+    <script src="radar.js"></script>
+  </body>
+</html>
